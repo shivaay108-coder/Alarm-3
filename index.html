@@ -1,0 +1,973 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#07101e">
+<title>SMART HUB PRO 2</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+ background:#070e1a;color:#fff;
+ font-family:Arial,sans-serif;
+ min-height:100vh;overflow-x:hidden
+}
+header{
+ height:65px;background:#101d31;
+ border-bottom:1px solid #29405e;
+ display:flex;align-items:center;
+ justify-content:space-between;padding:0 16px;
+ position:sticky;top:0;z-index:20
+}
+.logo{font-size:21px;font-weight:bold;color:#39d9ff}
+#headerTime{font-size:13px;color:#9cb9d8}
+nav{
+ display:flex;overflow-x:auto;gap:8px;
+ padding:12px;background:#0d192a;
+ scrollbar-width:none;position:sticky;top:65px;z-index:19
+}
+nav button{
+ min-width:95px;padding:13px 10px;
+ border-radius:10px;background:#172941;
+ border:1px solid #2b4666;color:white;
+ font-weight:bold
+}
+nav button.active{background:#078ab8;border-color:#35d9ff}
+main{max-width:850px;margin:auto;padding:14px}
+.page{display:none;animation:show .2s ease}
+.page.active{display:block}
+@keyframes show{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
+.card{
+ background:#101e32;border:1px solid #293f5d;
+ border-radius:16px;padding:17px;margin-bottom:15px
+}
+h2{font-size:21px;color:#43d9ff;margin-bottom:15px}
+h3{font-size:16px;margin:12px 0}
+p{font-size:13px;line-height:1.6;color:#b2c6df}
+input,textarea,select{
+ width:100%;padding:13px;margin:7px 0;
+ border-radius:9px;border:1px solid #344d6c;
+ background:#091526;color:white;font-size:15px;
+ outline:none
+}
+textarea{min-height:200px;resize:vertical}
+button{cursor:pointer}
+.btn{
+ padding:12px 15px;border:0;border-radius:9px;
+ background:#078fbe;color:white;font-weight:bold;
+ margin:5px 2px
+}
+.green{background:#148a65}
+.red{background:#bd3549}
+.gray{background:#354761}
+.full{width:100%;margin:8px 0}
+.row{display:flex;gap:7px;flex-wrap:wrap}
+.row>*{flex:1;min-width:65px}
+.big{
+ font-size:45px;text-align:center;color:#44dcff;
+ font-weight:bold;padding:18px 0;
+ font-variant-numeric:tabular-nums
+}
+.center{text-align:center}
+.muted{color:#92a9c5;font-size:12px}
+.item{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:8px;padding:13px;background:#0a1729;
+ border:1px solid #2a4261;border-radius:10px;margin-top:9px
+}
+.item strong{overflow-wrap:anywhere}
+.item small{display:block;color:#a1b6d0;margin-top:5px}
+#qrcode{
+ background:white;padding:15px;border-radius:10px;
+ width:max-content;max-width:100%;margin:15px auto;
+ display:flex;justify-content:center
+}
+#qrcode img,#qrcode canvas{max-width:100%;height:auto}
+.result{
+ background:#091526;border:1px solid #2c4665;
+ padding:13px;border-radius:10px;
+ margin-top:12px;overflow-wrap:anywhere;
+ white-space:pre-wrap
+}
+video{width:100%;max-height:280px;background:black;border-radius:10px}
+footer{text-align:center;color:#637c9a;padding:25px;font-size:12px}
+.status{color:#44dfa8;font-size:12px}
+@media(max-width:450px){
+ .big{font-size:36px}
+ .card{padding:13px}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+ <div class="logo">◈ SMART HUB</div>
+ <div id="headerTime">00:00:00</div>
+</header>
+
+<nav id="nav">
+ <button class="active" data-page="alarm">⏰ Alarm</button>
+ <button data-page="notes">📝 Notes</button>
+ <button data-page="qr">▦ QR Studio</button>
+ <button data-page="security">🔐 Security</button>
+</nav>
+
+<main>
+
+<!-- ALARM -->
+
+<section class="page active" id="alarm">
+
+<div class="card center">
+ <h2>⏰ Smart Alarm Clock</h2>
+ <div class="big" id="clock">00:00:00</div>
+ <p id="date"></p>
+ <p class="status" id="alarmStatus">Alarm system ready</p>
+</div>
+
+<div class="card">
+ <h2>Set Alarm</h2>
+ <input type="text" id="alarmName" placeholder="Alarm name">
+ <input type="datetime-local" id="alarmTime">
+ <button class="btn full" onclick="addAlarm()">＋ Set New Alarm</button>
+ <h3>Scheduled Alarms</h3>
+ <div id="alarmList"></div>
+</div>
+
+<div class="card">
+ <h2>⏳ Timer</h2>
+ <div class="big" id="timerDisplay">00:00:00</div>
+ <div class="row">
+  <input id="th" type="number" min="0" placeholder="Hours">
+  <input id="tm" type="number" min="0" max="59" placeholder="Minutes">
+  <input id="ts" type="number" min="0" max="59" placeholder="Seconds">
+ </div>
+ <button class="btn green" onclick="startTimer()">Start</button>
+ <button class="btn gray" onclick="pauseTimer()">Pause</button>
+ <button class="btn red" onclick="resetTimer()">Reset</button>
+</div>
+
+<div class="card">
+ <h2>⏱ Stopwatch</h2>
+ <div class="big" id="watchDisplay">00:00:00.00</div>
+ <button class="btn green" onclick="startWatch()">Start</button>
+ <button class="btn gray" onclick="pauseWatch()">Pause</button>
+ <button class="btn red" onclick="resetWatch()">Reset</button>
+</div>
+
+</section>
+
+<!-- NOTES -->
+
+<section class="page" id="notes">
+
+<div class="card">
+ <h2>📝 Smart Notepad</h2>
+ <input id="noteName" placeholder="Enter note file name">
+ <textarea id="noteContent" placeholder="Write anything you want here..."></textarea>
+ <button class="btn green" onclick="saveNote()">💾 Save File</button>
+ <button class="btn gray" onclick="newNote()">＋ New Note</button>
+ <button class="btn gray" onclick="exportNote()">Export TXT</button>
+ <p class="muted" id="noteStatus">Your notes are stored in this browser.</p>
+</div>
+
+<div class="card">
+ <h2>📁 Open Saved Files</h2>
+ <input id="searchNotes" placeholder="Search files..." oninput="renderNotes()">
+ <div id="noteFiles"></div>
+</div>
+
+</section>
+
+<!-- QR -->
+
+<section class="page" id="qr">
+
+<div class="card">
+ <h2>▦ QR Code Generator</h2>
+ <select id="qrType">
+  <option value="text">Normal Text</option>
+  <option value="phone">Phone Number</option>
+  <option value="whatsapp">WhatsApp</option>
+  <option value="url">Website URL</option>
+ </select>
+ <input id="qrInput" placeholder="Enter your information">
+ <button class="btn full" onclick="makeQR()">Generate QR Code</button>
+ <div id="qrcode"></div>
+ <button class="btn green full" onclick="downloadQR()">Download QR Image</button>
+ <div class="result" id="qrInfo">Your QR information will appear here.</div>
+</div>
+
+<div class="card">
+ <h2>📷 QR Scanner</h2>
+ <video id="camera" playsinline></video>
+ <canvas id="canvas" hidden></canvas>
+ <button class="btn full" onclick="startScanner()">Start Camera</button>
+ <button class="btn red full" onclick="stopScanner()">Stop Camera</button>
+ <h3>Or scan an image</h3>
+ <input type="file" id="qrImage" accept="image/*">
+ <div class="result" id="scanResult">Scan result will appear here.</div>
+</div>
+
+</section>
+
+<!-- SECURITY -->
+
+<section class="page" id="security">
+
+<div class="card">
+ <h2>🔐 Encrypt Information</h2>
+ <p>Encrypt your message using AES-256-GCM and a password.</p>
+ <textarea id="plainText" placeholder="Write your private message"></textarea>
+ <input type="password" id="encPass" placeholder="Create password (8+ characters)">
+ <button class="btn full" onclick="encryptMessage()">🔒 Encrypt</button>
+ <div class="result" id="encResult">Encrypted text will appear here.</div>
+ <button class="btn green full" onclick="copyText('encResult')">Copy Encrypted Text</button>
+</div>
+
+<div class="card">
+ <h2>🔓 Decrypt Information</h2>
+ <textarea id="cipherText" placeholder="Paste encrypted text received from another person"></textarea>
+ <input type="password" id="decPass" placeholder="Enter password">
+ <button class="btn full" onclick="decryptMessage()">Decrypt Message</button>
+ <div class="result" id="decResult">Decrypted information will appear here.</div>
+ <button class="btn green full" onclick="copyText('decResult')">Copy Decrypted Text</button>
+</div>
+
+</section>
+
+</main>
+
+<footer>
+ SMART HUB PROTOTYPE 2<br>
+ Alarm • Notepad • QR Studio • Secure Sharing
+</footer>
+
+<script>
+
+// NAVIGATION AND SWIPE
+
+const pageNames=["alarm","notes","qr","security"];
+let pageIndex=0;
+
+function showPage(index){
+ pageIndex=(index+pageNames.length)%pageNames.length;
+
+ document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+ document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+
+ document.getElementById(pageNames[pageIndex]).classList.add("active");
+ document.querySelector(`[data-page="${pageNames[pageIndex]}"]`).classList.add("active");
+}
+
+document.querySelectorAll("nav button").forEach((b,i)=>{
+ b.onclick=()=>showPage(i);
+});
+
+let sx=0,sy=0;
+
+document.addEventListener("touchstart",e=>{
+ if(e.target.closest("input,textarea,button,select,video"))return;
+ sx=e.changedTouches[0].screenX;
+ sy=e.changedTouches[0].screenY;
+},{passive:true});
+
+document.addEventListener("touchend",e=>{
+ if(!sx)return;
+ let dx=e.changedTouches[0].screenX-sx;
+ let dy=e.changedTouches[0].screenY-sy;
+
+ if(Math.abs(dx)>85&&Math.abs(dx)>Math.abs(dy)){
+  showPage(pageIndex+(dx<0?1:-1));
+ }
+ sx=0;
+},{passive:true});
+
+
+// CLOCK
+
+function updateClock(){
+ let d=new Date();
+ let t=d.toLocaleTimeString("en-IN",{hour12:false});
+ document.getElementById("clock").textContent=t;
+ document.getElementById("headerTime").textContent=t;
+ document.getElementById("date").textContent=d.toLocaleDateString("en-IN",{
+  weekday:"long",year:"numeric",month:"long",day:"numeric"
+ });
+}
+setInterval(updateClock,250);
+updateClock();
+
+
+// SOUND
+
+let audio=null;
+let ringing=false;
+let soundLoop=null;
+
+function sound(){
+ try{
+  audio=audio||new (window.AudioContext||window.webkitAudioContext)();
+  if(audio.state==="suspended")audio.resume();
+
+  let osc=audio.createOscillator();
+  let gain=audio.createGain();
+
+  osc.type="sine";
+  osc.frequency.value=880;
+  gain.gain.value=.17;
+  osc.connect(gain);
+  gain.connect(audio.destination);
+  osc.start();
+  osc.stop(audio.currentTime+.55);
+ }catch(e){}
+}
+
+function startSound(){
+ if(ringing)return;
+ ringing=true;
+ sound();
+ soundLoop=setInterval(sound,1100);
+ if(navigator.vibrate)navigator.vibrate([500,300,500]);
+}
+
+function stopSound(){
+ ringing=false;
+ clearInterval(soundLoop);
+ soundLoop=null;
+ if(navigator.vibrate)navigator.vibrate(0);
+
+ if(window.AndroidAlarm){
+  AndroidAlarm.stopAlarm();
+ }
+}
+
+
+// ALARMS
+
+let alarms=JSON.parse(localStorage.getItem("hub_alarms")||"[]");
+
+function saveAlarms(){
+ localStorage.setItem("hub_alarms",JSON.stringify(alarms));
+}
+
+function addAlarm(){
+ audio=audio||new (window.AudioContext||window.webkitAudioContext)();
+ audio.resume();
+
+ let name=document.getElementById("alarmName").value.trim()||"My Alarm";
+ let value=document.getElementById("alarmTime").value;
+
+ if(!value)return alert("Select alarm date and time.");
+
+ let time=new Date(value).getTime();
+
+ if(!Number.isFinite(time)||time<=Date.now()){
+  return alert("Select a future time.");
+ }
+
+ let alarm={
+  id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),
+  name,time,fired:false
+ };
+
+ alarms.push(alarm);
+ saveAlarms();
+
+ if(window.AndroidAlarm){
+  try{
+   if(AndroidAlarm.exactAlarmPermission()){
+    AndroidAlarm.schedule(String(alarm.id),name,time);
+    document.getElementById("alarmStatus").textContent="Android alarm scheduled";
+   }else{
+    document.getElementById("alarmStatus").textContent="Exact alarm permission required";
+   }
+  }catch(e){
+   console.error(e);
+  }
+ }
+
+ document.getElementById("alarmName").value="";
+ renderAlarms();
+ alert("Alarm saved!");
+}
+
+function deleteAlarm(id){
+ if(window.AndroidAlarm){
+  try{AndroidAlarm.cancel(String(id));}catch(e){}
+ }
+ alarms=alarms.filter(a=>String(a.id)!==String(id));
+ saveAlarms();
+ renderAlarms();
+}
+
+function renderAlarms(){
+ let box=document.getElementById("alarmList");
+ box.innerHTML="";
+
+ if(!alarms.length){
+  box.textContent="No alarms scheduled.";
+  return;
+ }
+
+ alarms.sort((a,b)=>a.time-b.time);
+
+ alarms.forEach(a=>{
+  let div=document.createElement("div");
+  div.className="item";
+
+  let info=document.createElement("div");
+  let title=document.createElement("strong");
+  title.textContent=a.name;
+
+  let small=document.createElement("small");
+  small.textContent=new Date(a.time).toLocaleString();
+
+  info.append(title,document.createElement("br"),small);
+
+  let btn=document.createElement("button");
+  btn.className="btn red";
+  btn.textContent="Delete";
+  btn.onclick=()=>deleteAlarm(a.id);
+
+  div.append(info,btn);
+  box.append(div);
+ });
+}
+
+function checkAlarms(){
+ let now=Date.now();
+ let changed=false;
+
+ alarms.forEach(a=>{
+  if(!a.fired&&now>=a.time){
+   a.fired=true;
+   changed=true;
+   startSound();
+   document.getElementById("alarmStatus").textContent="ALARM RINGING: "+a.name;
+   alert("⏰ ALARM: "+a.name);
+
+   if("Notification" in window&&Notification.permission==="granted"){
+    new Notification("SMART HUB ALARM",{body:a.name});
+   }
+  }
+ });
+
+ if(changed)saveAlarms();
+}
+
+setInterval(checkAlarms,500);
+renderAlarms();
+
+// Android alarm restoration
+if(window.AndroidAlarm){
+ alarms.forEach(a=>{
+  if(!a.fired&&a.time>Date.now()){
+   try{
+    AndroidAlarm.schedule(String(a.id),a.name,a.time);
+   }catch(e){}
+  }
+ });
+}
+
+
+// TIMER
+
+let timerEnd=0,timerRemaining=0,timerRunning=false,timerInterval=null;
+
+function format(ms){
+ let n=Math.max(0,Math.ceil(ms/1000));
+ let h=Math.floor(n/3600);
+ let m=Math.floor(n%3600/60);
+ let s=n%60;
+ return [h,m,s].map(x=>String(x).padStart(2,"0")).join(":");
+}
+
+function updateTimer(){
+ let left=timerRunning?timerEnd-Date.now():timerRemaining;
+ document.getElementById("timerDisplay").textContent=format(left);
+
+ if(timerRunning&&left<=0){
+  timerRunning=false;
+  clearInterval(timerInterval);
+  timerRemaining=0;
+  startSound();
+  alert("TIMER FINISHED!");
+ }
+}
+
+function startTimer(){
+ if(timerRunning)return;
+
+ if(timerRemaining<=0){
+  let h=Number(document.getElementById("th").value)||0;
+  let m=Number(document.getElementById("tm").value)||0;
+  let s=Number(document.getElementById("ts").value)||0;
+
+  timerRemaining=(h*3600+m*60+s)*1000;
+
+  if(timerRemaining<=0)return alert("Enter timer duration.");
+ }
+
+ timerEnd=Date.now()+timerRemaining;
+ timerRunning=true;
+ clearInterval(timerInterval);
+ timerInterval=setInterval(updateTimer,100);
+ updateTimer();
+}
+
+function pauseTimer(){
+ if(!timerRunning)return;
+ timerRemaining=Math.max(0,timerEnd-Date.now());
+ timerRunning=false;
+ clearInterval(timerInterval);
+ updateTimer();
+}
+
+function resetTimer(){
+ timerRunning=false;
+ clearInterval(timerInterval);
+ timerRemaining=0;
+ stopSound();
+ updateTimer();
+}
+
+
+// STOPWATCH
+
+let watchStart=0,watchElapsed=0,watchRunning=false,watchInterval=null;
+
+function updateWatch(){
+ let ms=watchElapsed+(watchRunning?Date.now()-watchStart:0);
+ let cs=Math.floor(ms/10)%100;
+ let sec=Math.floor(ms/1000)%60;
+ let min=Math.floor(ms/60000)%60;
+ let hr=Math.floor(ms/3600000);
+
+ document.getElementById("watchDisplay").textContent=
+ [hr,min,sec].map(x=>String(x).padStart(2,"0")).join(":")+
+ "."+String(cs).padStart(2,"0");
+}
+
+function startWatch(){
+ if(watchRunning)return;
+ watchStart=Date.now();
+ watchRunning=true;
+ watchInterval=setInterval(updateWatch,30);
+}
+
+function pauseWatch(){
+ if(!watchRunning)return;
+ watchElapsed+=Date.now()-watchStart;
+ watchRunning=false;
+ clearInterval(watchInterval);
+ updateWatch();
+}
+
+function resetWatch(){
+ watchRunning=false;
+ watchElapsed=0;
+ clearInterval(watchInterval);
+ updateWatch();
+}
+
+
+// NOTEPAD
+
+let notes=JSON.parse(localStorage.getItem("hub_notes")||"[]");
+let editing=null;
+
+function saveNote(){
+ let name=document.getElementById("noteName").value.trim();
+ let content=document.getElementById("noteContent").value;
+
+ if(!name)return alert("Enter file name.");
+ if(!content.trim())return alert("Write something first.");
+
+ if(editing!==null){
+  let note=notes.find(n=>n.id===editing);
+  if(note){
+   note.name=name;
+   note.content=content;
+   note.updated=Date.now();
+  }
+ }else{
+  notes.push({
+   id:Date.now()+Math.random(),
+   name,content,updated:Date.now()
+  });
+ }
+
+ localStorage.setItem("hub_notes",JSON.stringify(notes));
+ editing=null;
+ renderNotes();
+ document.getElementById("noteStatus").textContent="File saved successfully.";
+}
+
+function newNote(){
+ editing=null;
+ document.getElementById("noteName").value="";
+ document.getElementById("noteContent").value="";
+}
+
+function openNote(id){
+ let n=notes.find(x=>x.id===id);
+ if(!n)return;
+
+ editing=id;
+ document.getElementById("noteName").value=n.name;
+ document.getElementById("noteContent").value=n.content;
+ showPage(1);
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function deleteNote(id){
+ if(!confirm("Delete this saved file?"))return;
+ notes=notes.filter(n=>n.id!==id);
+ localStorage.setItem("hub_notes",JSON.stringify(notes));
+ if(editing===id)newNote();
+ renderNotes();
+}
+
+function renderNotes(){
+ let box=document.getElementById("noteFiles");
+ let q=document.getElementById("searchNotes").value.toLowerCase();
+ box.innerHTML="";
+
+ let filtered=notes.filter(n=>n.name.toLowerCase().includes(q));
+
+ if(!filtered.length){
+  box.textContent="No saved files found.";
+  return;
+ }
+
+ filtered.forEach(n=>{
+  let div=document.createElement("div");
+  div.className="item";
+
+  let info=document.createElement("div");
+  info.style.flex="1";
+  info.style.cursor="pointer";
+  info.onclick=()=>openNote(n.id);
+
+  let strong=document.createElement("strong");
+  strong.textContent="📄 "+n.name;
+
+  let small=document.createElement("small");
+  small.textContent=new Date(n.updated).toLocaleString();
+
+  info.append(strong,document.createElement("br"),small);
+
+  let del=document.createElement("button");
+  del.className="btn red";
+  del.textContent="Delete";
+  del.onclick=()=>deleteNote(n.id);
+
+  div.append(info,del);
+  box.append(div);
+ });
+}
+
+function exportNote(){
+ let name=document.getElementById("noteName").value.trim()||"MyNote";
+ let content=document.getElementById("noteContent").value;
+
+ if(!content)return alert("No note to export.");
+
+ let blob=new Blob([content],{type:"text/plain;charset=utf-8"});
+ let url=URL.createObjectURL(blob);
+ let a=document.createElement("a");
+ a.href=url;
+ a.download=name+".txt";
+ a.click();
+ URL.revokeObjectURL(url);
+}
+
+renderNotes();
+
+
+// QR GENERATOR
+
+function makeQR(){
+ let type=document.getElementById("qrType").value;
+ let value=document.getElementById("qrInput").value.trim();
+
+ if(!value)return alert("Enter information.");
+
+ let data=value;
+
+ if(type==="phone"){
+  let n=value.replace(/[\s-]/g,"");
+  if(!/^\+?[0-9]{7,15}$/.test(n))return alert("Enter a valid phone number.");
+  data="tel:"+n;
+ }
+
+ if(type==="whatsapp"){
+  let n=value.replace(/\D/g,"");
+  if(n.length<8||n.length>15)return alert("Enter a valid international number.");
+  data="https://wa.me/"+n;
+ }
+
+ if(type==="url"){
+  try{
+   let u=new URL(/^https?:\/\//i.test(value)?value:"https://"+value);
+   if(!["http:","https:"].includes(u.protocol))throw 0;
+   data=u.href;
+  }catch(e){return alert("Enter a valid website URL.");}
+ }
+
+ let box=document.getElementById("qrcode");
+ box.innerHTML="";
+
+ if(typeof QRCode==="undefined")return alert("QR library needs internet connection.");
+
+ new QRCode(box,{
+  text:data,
+  width:230,
+  height:230,
+  correctLevel:QRCode.CorrectLevel.H
+ });
+
+ document.getElementById("qrInfo").textContent="QR DATA: "+data;
+}
+
+function downloadQR(){
+ let box=document.getElementById("qrcode");
+ let canvas=box.querySelector("canvas");
+ let img=box.querySelector("img");
+
+ let url=canvas?canvas.toDataURL("image/png"):img?.src;
+
+ if(!url)return alert("Generate QR first.");
+
+ let a=document.createElement("a");
+ a.href=url;
+ a.download="SmartHub-QR.png";
+ a.click();
+}
+
+
+// QR SCANNER
+
+let stream=null,scanInterval=null;
+
+async function startScanner(){
+ try{
+  if(!navigator.mediaDevices?.getUserMedia){
+   throw Error("Camera requires HTTPS or a supported Android WebView.");
+  }
+
+  stopScanner();
+
+  stream=await navigator.mediaDevices.getUserMedia({
+   video:{facingMode:{ideal:"environment"}}
+  });
+
+  let video=document.getElementById("camera");
+  video.srcObject=stream;
+  await video.play();
+
+  scanInterval=setInterval(()=>{
+   if(video.readyState!==video.HAVE_ENOUGH_DATA)return;
+
+   let canvas=document.getElementById("canvas");
+   let ctx=canvas.getContext("2d");
+
+   canvas.width=video.videoWidth;
+   canvas.height=video.videoHeight;
+   ctx.drawImage(video,0,0);
+
+   let pixels=ctx.getImageData(0,0,canvas.width,canvas.height);
+
+   if(typeof jsQR!=="function")return;
+
+   let code=jsQR(pixels.data,pixels.width,pixels.height);
+
+   if(code){
+    document.getElementById("scanResult").textContent=code.data;
+    stopScanner();
+   }
+  },250);
+
+ }catch(e){
+  alert("Scanner error: "+e.message);
+ }
+}
+
+function stopScanner(){
+ clearInterval(scanInterval);
+ scanInterval=null;
+
+ if(stream){
+  stream.getTracks().forEach(t=>t.stop());
+  stream=null;
+ }
+
+ document.getElementById("camera").srcObject=null;
+}
+
+document.getElementById("qrImage").addEventListener("change",e=>{
+ let file=e.target.files[0];
+ if(!file)return;
+
+ let url=URL.createObjectURL(file);
+ let img=new Image();
+
+ img.onload=()=>{
+  let canvas=document.getElementById("canvas");
+  let ctx=canvas.getContext("2d");
+
+  canvas.width=img.width;
+  canvas.height=img.height;
+  ctx.drawImage(img,0,0);
+
+  let pixels=ctx.getImageData(0,0,canvas.width,canvas.height);
+
+  let code=typeof jsQR==="function"?
+   jsQR(pixels.data,pixels.width,pixels.height):null;
+
+  document.getElementById("scanResult").textContent=
+   code?code.data:"QR code not found.";
+
+  URL.revokeObjectURL(url);
+ };
+
+ img.src=url;
+ e.target.value="";
+});
+
+
+// AES-256-GCM ENCRYPTION
+
+function toBase64(bytes){
+ let binary="";
+ bytes.forEach(b=>binary+=String.fromCharCode(b));
+ return btoa(binary);
+}
+
+function fromBase64(value){
+ let binary=atob(value);
+ return Uint8Array.from(binary,c=>c.charCodeAt(0));
+}
+
+async function deriveKey(password,salt,usage){
+ let material=await crypto.subtle.importKey(
+  "raw",new TextEncoder().encode(password),
+  "PBKDF2",false,["deriveKey"]
+ );
+
+ return crypto.subtle.deriveKey({
+  name:"PBKDF2",
+  salt,
+  iterations:250000,
+  hash:"SHA-256"
+ },material,{
+  name:"AES-GCM",length:256
+ },false,[usage]);
+}
+
+async function encryptMessage(){
+ try{
+  let message=document.getElementById("plainText").value;
+  let password=document.getElementById("encPass").value;
+
+  if(!message||password.length<8){
+   return alert("Enter message and a password of at least 8 characters.");
+  }
+
+  if(!crypto.subtle)throw Error("Secure context required. Use HTTPS or localhost.");
+
+  let salt=crypto.getRandomValues(new Uint8Array(16));
+  let iv=crypto.getRandomValues(new Uint8Array(12));
+
+  let key=await deriveKey(password,salt,"encrypt");
+
+  let encrypted=await crypto.subtle.encrypt(
+   {name:"AES-GCM",iv},
+   key,new TextEncoder().encode(message)
+  );
+
+  let payload={
+   version:1,
+   algorithm:"AES-256-GCM",
+   salt:toBase64(salt),
+   iv:toBase64(iv),
+   data:toBase64(new Uint8Array(encrypted))
+  };
+
+  let result="SHUB1:"+btoa(JSON.stringify(payload));
+
+  document.getElementById("encResult").textContent=result;
+
+ }catch(e){
+  alert("Encryption failed: "+e.message);
+ }
+  }
+
+async function decryptMessage(){
+ try{
+  let input=document.getElementById("cipherText").value.trim();
+  let password=document.getElementById("decPass").value;
+
+  if(!input||!password)return alert("Enter encrypted text and password.");
+  if(!input.startsWith("SHUB1:"))throw Error("Invalid encrypted format.");
+
+  let payload=JSON.parse(atob(input.substring(6)));
+
+  if(payload.version!==1||payload.algorithm!=="AES-256-GCM"){
+   throw Error("Unsupported encrypted format.");
+  }
+
+  let salt=fromBase64(payload.salt);
+  let iv=fromBase64(payload.iv);
+  let data=fromBase64(payload.data);
+
+  let key=await deriveKey(password,salt,"decrypt");
+
+  let decrypted=await crypto.subtle.decrypt(
+   {name:"AES-GCM",iv},
+   key,data
+  );
+
+  document.getElementById("decResult").textContent=
+   new TextDecoder().decode(decrypted);
+
+ }catch(e){
+  document.getElementById("decResult").textContent=
+   "Decryption failed. Wrong password or damaged encrypted text.";
+ }
+}
+
+
+// COPY
+
+async function copyText(id){
+ let text=document.getElementById(id).textContent;
+
+ if(!text||text.includes("will appear here"))return alert("Nothing to copy.");
+
+ try{
+  await navigator.clipboard.writeText(text);
+  alert("Copied successfully!");
+ }catch(e){
+  alert("Clipboard access requires permission or HTTPS.");
+ }
+}
+
+
+// NOTIFICATION
+
+if("Notification" in window && Notification.permission==="default"){
+ Notification.requestPermission().catch(()=>{});
+}
+
+</script>
+
+</body>
+</html>
